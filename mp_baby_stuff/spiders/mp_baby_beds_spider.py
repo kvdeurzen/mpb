@@ -1,3 +1,6 @@
+import re
+import datetime
+
 from scrapy import Spider, Request
 from scrapy.selector import Selector
 from scrapy.exceptions import CloseSpider
@@ -40,6 +43,7 @@ class MPBabyBedsSpider(Spider):
   CATEGORY_EXTRACTOR        = '//meta[@name="twitter:data2"]/@content'
   ASKING_PRICE_EXTRACTOR    = '//*[@id="vip-ad-price-container"]/span/text()'
 
+  dt_regex = "(\d+)\s(\w+)\.\s\'(\d{2})\,\s(\d{1,2}):(\d{2})"
 
   def parse(self, response):
 
@@ -67,29 +71,51 @@ class MPBabyBedsSpider(Spider):
 #    item = MPBabyStuffItem()
 #    item['_id'] = 'test'
 
-    #item['title']       = 'test'
-    seller_list          = Selector(response).xpath(self.SELLER_EXTRACTOR).extract()
-    seller_url_list      = Selector(response).xpath(self.SELLER_URL_EXTRACTOR).extract()
-    description_list     = Selector(response).xpath(self.DESCRIPTION_EXTRACTOR).extract()
-    location_list        = Selector(response).xpath(self.LOCATION_EXTRACTOR).extract()
-    date_posted_list     = Selector(response).xpath(self.DATE_POSTED_EXTRACTOR).extract()
-    condition_list       = Selector(response).xpath(self.CONDITION_EXTRACTOR).extract()
-    type_list            = Selector(response).xpath(self.TYPE_EXTRACTOR).extract()
-    brand_list           = Selector(response).xpath(self.BRAND_EXTRACTOR).extract()
-    characteristics_list = Selector(response).xpath(self.CHARACTERISTICS_EXTRACTOR).extract()
-    category_list        = Selector(response).xpath(self.CATEGORY_EXTRACTOR).extract()
-    asking_price_list    = Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()[0].replace(',','.').replace('\u20AC ','')
+    # Collect raw data response
+    seller_raw          = Selector(response).xpath(self.SELLER_EXTRACTOR).extract()
+    seller_url_raw      = Selector(response).xpath(self.SELLER_URL_EXTRACTOR).extract()
+    description_raw     = Selector(response).xpath(self.DESCRIPTION_EXTRACTOR).extract()
+    location_raw        = Selector(response).xpath(self.LOCATION_EXTRACTOR).extract()
+    date_posted_raw     = Selector(response).xpath(self.DATE_POSTED_EXTRACTOR).extract()
+    condition_raw       = Selector(response).xpath(self.CONDITION_EXTRACTOR).extract()
+    type_raw            = Selector(response).xpath(self.TYPE_EXTRACTOR).extract()
+    brand_raw           = Selector(response).xpath(self.BRAND_EXTRACTOR).extract()
+    characteristics_raw = Selector(response).xpath(self.CHARACTERISTICS_EXTRACTOR).extract()
+    category_raw        = Selector(response).xpath(self.CATEGORY_EXTRACTOR).extract()
+    asking_price_raw    = float(Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()[0].replace(',','.').replace('\u20AC ',''))
 
-    if seller_list:          item ['seller']          = seller_list[0]
-    if seller_url_list:      item ['seller_url']      = seller_url_list[0]
-    if description_list:     item ['description']     = " ".join(description_list)
-    if location_list:        item ['location']        = location_list[0]
-    if date_posted_list:     item ['date_posted']     = date_posted_list[0]
-    if condition_list:       item ['condition']       = condition_list[0]
-    if type_list:            item ['type']            = type_list[0]
-    if brand_list:           item ['brand']           = brand_list[0]
-    if characteristics_list: item ['characteristics'] = characteristics_list[0]
-    if category_list:        item ['category']        = category_list[0]
-    if asking_price_list:    item ['asking_price']    = asking_price_list
+    # Interpret date
+    raw_dt = re.match(self.dt_regex, date_posted_raw[0])
+    if raw_dt:
+      day    = int(raw_dt.group(1))
+      month  = raw_dt.group(2)
+      if month   == "jan": month = 1
+      elif month == "feb": month = 2
+      elif month == "maa": month = 3
+      elif month == "apr": month = 4
+      elif month == "mei": month = 5
+      elif month == "jun": month = 6
+      elif month == "jul": month = 7
+      elif month == "aug": month = 8
+      elif month == "sep": month = 9
+      elif month == "okt": month = 10
+      elif month == "nov": month = 11
+      elif month == "dec": month = 12
+      year   = int(raw_dt.group(3)) + 2000
+      hour   = int(raw_dt.group(4))
+      minute = int(raw_dt.group(5))
+
+    # Build item
+    if seller_raw:          item ['seller']          = seller_raw[0]
+    if seller_url_raw:      item ['seller_url']      = seller_url_raw[0]
+    if description_raw:     item ['description']     = " ".join(description_raw)
+    if location_raw:        item ['location']        = location_raw[0]
+    if date_posted_raw:     item ['date_posted']     = datetime.datetime(year, month, day, hour, minute)
+    if condition_raw:       item ['condition']       = condition_raw[0]
+    if type_raw:            item ['type']            = type_raw[0]
+    if brand_raw:           item ['brand']           = brand_raw[0]
+    if characteristics_raw: item ['characteristics'] = characteristics_raw[0]
+    if category_raw:        item ['category']        = category_raw[0]
+    if asking_price_raw:    item ['asking_price']    = asking_price_raw
 
     return item
