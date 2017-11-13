@@ -8,8 +8,8 @@ class MPBabyBedsSpider(Spider):
   name = "mp_baby_stuff"
   allowed_domains = ["marktplaats.nl"]
   start_urls = [
-#      'https://www.marktplaats.nl/a/kinderen-en-baby-s/buggy-s/m1220231231-kinder-buggy.html?c=a2384ef0ece270f44503df9f8598c624&previousPage=lr&pos=7'
-#      'https://www.marktplaats.nl/a/kinderen-en-baby-s/overige-kinderen-en-baby-s/a1009704838-universele-voetenzak-voetzak-voor-buggy-kinderwagen-401000.html?c=a2384ef0ece270f44503df9f8598c624&previousPage=lr&pos=8&casData=AvB_UI1O_8uYh32EBn_Jc7MR4brxGcqBj7Jh9a9fckCxQKCzhSvXDhLSwbi9qxFOXzTgx4G7xskZLKRpCyO-ahU2LCVsIClYdJ3W-YJvaS2DS43189wXVIP7IUbGbHpmvq19HHdhJGbxPHOg6AgYPsYBnXcTRyA0rojqx9PRAT3820Hvk0ORoz_89P84hYOw4bLJRL9dCQ3u5M1dIyksQuQKtk0c4aQ3GKxdqCO0GFbFM02sXTYtVyYFRJqVAUBhs0XmsK_DBKGd__QXFciCCPswiuWp8Tfi_It29QPwFck_JsSLsu3K1oPoPSohYcm-OoRj9NqGcB_pqYcfAV_8_5-g_k4OfxXALAWYbUrWYhNlnworCWQU0zXVwb_5OvF1ZvQykUrzHIMUI6i35fWRjZJ60Mm7r-BVpsPL3ippQI8OXlCmyeO_OwzrW547FUN21j9tZwvcfNMrdfgx3GFsug'
+#       "https://www.marktplaats.nl/a/kinderen-en-baby-s/babywiegjes-en-ledikanten/m1224575734-kinderledikantje.html?c=efb2ef4dc323389c4f92ed10afa33e3a&previousPage=lr&pos=1"
+#       ]
       "https://www.marktplaats.nl/z/z.html?categoryId=577&startDateFrom=yesterday&sortBy=SortIndex",
       "https://www.marktplaats.nl/z/kinderen-en-baby-s/babyvoeding-en-toebehoren.html?categoryId=1489&sortBy=SortIndex&startDateFrom=yesterday",
       "https://www.marktplaats.nl/z/kinderen-en-baby-s/kinderwagen.html?query=kinderwagen&categoryId=565&sortBy=SortIndex&startDateFrom=yesterday",
@@ -78,7 +78,7 @@ class MPBabyBedsSpider(Spider):
     brand_list           = Selector(response).xpath(self.BRAND_EXTRACTOR).extract()
     characteristics_list = Selector(response).xpath(self.CHARACTERISTICS_EXTRACTOR).extract()
     category_list        = Selector(response).xpath(self.CATEGORY_EXTRACTOR).extract()
-    asking_price_list    = Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()
+    asking_price_list    = Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()[0].replace(',','.').replace('\u20AC ','')
 
     if seller_list:          item ['seller']          = seller_list[0]
     if seller_url_list:      item ['seller_url']      = seller_url_list[0]
@@ -90,6 +90,6 @@ class MPBabyBedsSpider(Spider):
     if brand_list:           item ['brand']           = brand_list[0]
     if characteristics_list: item ['characteristics'] = characteristics_list[0]
     if category_list:        item ['category']        = category_list[0]
-    if asking_price_list:    item ['asking_price']    = asking_price_list[0]
+    if asking_price_list:    item ['asking_price']    = asking_price_list
 
     return item
