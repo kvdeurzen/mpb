@@ -82,7 +82,13 @@ class MPBabyBedsSpider(Spider):
     brand_raw           = Selector(response).xpath(self.BRAND_EXTRACTOR).extract()
     characteristics_raw = Selector(response).xpath(self.CHARACTERISTICS_EXTRACTOR).extract()
     category_raw        = Selector(response).xpath(self.CATEGORY_EXTRACTOR).extract()
-    asking_price_raw    = float(Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()[0].replace(',','.').replace('\u20AC ',''))
+    asking_price_raw    = Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()[0].replace(',','.').replace('\u20AC ','')
+
+    # Change asking proce to float
+    try:
+      asking_price = float(asking_price_raw)
+    except ValueError:
+      asking_price = asking_price_raw
 
     # Interpret date
     raw_dt = re.match(self.dt_regex, date_posted_raw[0])
@@ -116,6 +122,6 @@ class MPBabyBedsSpider(Spider):
     if brand_raw:           item ['brand']           = brand_raw[0]
     if characteristics_raw: item ['characteristics'] = characteristics_raw[0]
     if category_raw:        item ['category']        = category_raw[0]
-    if asking_price_raw:    item ['asking_price']    = asking_price_raw
+    if asking_price:        item ['asking_price']    = asking_price
 
     return item
