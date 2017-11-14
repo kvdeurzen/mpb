@@ -43,7 +43,8 @@ class MPBabyBedsSpider(Spider):
   CATEGORY_EXTRACTOR        = '//meta[@name="twitter:data2"]/@content'
   ASKING_PRICE_EXTRACTOR    = '//*[@id="vip-ad-price-container"]/span/text()'
 
-  dt_regex = "(\d+)\s(\w+)\.\s\'(\d{2})\,\s(\d{1,2}):(\d{2})"
+  DATETIME_REGEX = "(\d+)\s(\w+)\.\s\'(\d{2})\,\s(\d{1,2}):(\d{2})" # Day, Month, Year, Hour, Minute
+  LOCATION_REGEX = "(\w+), (\w{2})" # Town, Province
 
   def parse(self, response):
 
@@ -84,17 +85,17 @@ class MPBabyBedsSpider(Spider):
     category_raw        = Selector(response).xpath(self.CATEGORY_EXTRACTOR).extract()
     asking_price_raw    = Selector(response).xpath(self.ASKING_PRICE_EXTRACTOR).extract()[0].replace(',','.').replace('\u20AC ','')
 
-    # Change asking proce to float
+    # Change asking price to float
     try:
       asking_price = float(asking_price_raw)
     except ValueError:
       asking_price = asking_price_raw
 
-    # Interpret date
-    raw_dt = re.match(self.dt_regex, date_posted_raw[0])
-    if raw_dt:
-      day    = int(raw_dt.group(1))
-      month  = raw_dt.group(2)
+    # Distill date
+    match = re.match(self.DATETIME_REGEX, date_posted_raw[0])
+    if match:
+      day    = int(match.group(1))
+      month  = match.group(2)
       if month   == "jan": month = 1
       elif month == "feb": month = 2
       elif month == "maa": month = 3
@@ -107,15 +108,20 @@ class MPBabyBedsSpider(Spider):
       elif month == "okt": month = 10
       elif month == "nov": month = 11
       elif month == "dec": month = 12
-      year   = int(raw_dt.group(3)) + 2000
-      hour   = int(raw_dt.group(4))
-      minute = int(raw_dt.group(5))
+      year   = int(match.group(3)) + 2000
+      hour   = int(match.group(4))
+      minute = int(match.group(5))
+
+    # Distill town and province
+    match = re.match(self.LOCATION_REGEX, location_raw[0])
+    if match:
+      town = match.group(1)
+      province = match.group(2)
 
     # Build item
     if seller_raw:          item ['seller']          = seller_raw[0]
     if seller_url_raw:      item ['seller_url']      = seller_url_raw[0]
     if description_raw:     item ['description']     = " ".join(description_raw)
-    if location_raw:        item ['location']        = location_raw[0]
     if date_posted_raw:     item ['date_posted']     = datetime.datetime(year, month, day, hour, minute)
     if condition_raw:       item ['condition']       = condition_raw[0]
     if type_raw:            item ['type']            = type_raw[0]
@@ -123,5 +129,7 @@ class MPBabyBedsSpider(Spider):
     if characteristics_raw: item ['characteristics'] = characteristics_raw[0]
     if category_raw:        item ['category']        = category_raw[0]
     if asking_price:        item ['asking_price']    = asking_price
+    if town:                item ['town']            = town
+    if province:            item ['province']        = province
 
     return item
